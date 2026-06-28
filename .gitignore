@@ -1,0 +1,5 @@
+# Build Files
+**/target/
+
+# Lock Files (don't include for libraries)
+**/Cargo.lock
