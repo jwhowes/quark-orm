@@ -5,3 +5,5 @@ impl From<sqlx::Error> for DbError {
         Self
     }
 }
+
+pub type Result<T> = core::result::Result<T, DbError>;
