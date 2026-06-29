@@ -2,7 +2,6 @@
 
 ## Derive Model
 
-### Basic
 ```rust
 use quark_orm::prelude::*;
 
@@ -19,17 +18,15 @@ pub struct Book {
 }
 
 async fn get_book_by_id(id: i32, db: &PgPool) -> quark_orm::Result<Book> {
-	Book::find_first(query! {
-		filter: {
-			id: id
-		}
+	Book::find_first(filter! {
+		id: id
 	})
 		.exec(db)
 		.await
 }
 ```
 
-### One-to-one Relation
+### Relations
 ```rust
 use quark_orm::prelude::*;
 
@@ -39,38 +36,87 @@ pub struct Book {
 	#[quark_orm(primary_key)]
 	pub id: i32,
 
-	#[quark_orm(foreign_key = "book_review")]
-	pub review_id: Option<i32>,
-
 	#[quark_orm(unique)]
 	pub title: String,
+	
+	#[quark_orm(to = "review")]
+	pub review_id: Option<i32>,
 
-	pub review Option<Review>
+	pub review: One<Review>,
+
+	#[quark_orm(via = "book_author")]
+	pub authors: Many<Author>
 }
 
 #[derive(Model)]
-#[quark_orm(table_name = "book_review")]
-pub struct BookReview {
+#[quark_orm(table_name = "review")]
+pub struct Review {
 	#[quark_orm(primary_key)]
 	pub id: i32,
 
-	#[quark_orm(foreign_key = "book")]
+	#[quark_orm(to = "book")]
 	pub book_id: i32,
 
 	pub rating: i32,
 
-	// Note: the existence of a book for a BookReview is non-optional, but the relation being returned as part of the model is
-	// TODO: think this through
-	pub book: Option<Book>
+	pub book: One<Book>
 }
 
-async fn get_book_with_review(id: i32, db: &PgPool) -> quark_orm::Result<Book> {
-	Book::find_first(query! {
-		filter: {
-			id: id
-		},
-		with: [review]
+#[derive(Model)]
+#[quark_orm(table_name = "author")]
+pub struct Author {
+	#[quark_orm(primary_key)]
+	pub id: i32,
+
+	#[quark_orm(unique)]
+	pub name: String,
+
+	#[quark_orm(via = "book_author")]
+	pub books: Many<Book>
+}
+
+#[derive(Model)]
+#[quark_orm(table_name = "book_author", primary_key = ["book_id", "author_id"])]
+pub struct BookAuthor {
+	#[quark_orm(to = "book")]
+	pub book_id: i32,
+
+	#[quark_orm(to = "author")]
+	pub author_id: i32,
+
+	pub author: One<Author>,
+	pub book: One<Book>
+}
+
+/**
+ * Book::With<(Review, Author)> {
+ * 	...Book,
+ * 	
+ * 	review: Option<Review>,
+ * 	authors: Vec<Author>
+ * }
+ */
+async fn get_book(book_id: i32, db: &PgPool) -> quark_orm::Result<Book::With<(Review, Author)>> {
+	Book::find_first(filter! {
+		id: book_id
 	})
+		.exec(db)
+		.await
+}
+
+/**
+ * Author::With<((Book, Review))> {
+ * 	...Author,
+ * 
+ * 	books: Vec<Book::With<Review>>
+ * }
+ */
+async fn get_author(author_id: i32, db: &PgPool) -> quark_orm::Result<Author::With<((Book, Review))>> {
+	Book::find_first(filter! {
+		id: author_id
+	})
+		.exec(db)
+		.await
 }
 ```
 
