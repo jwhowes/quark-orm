@@ -108,10 +108,10 @@ async fn get_book(book_id: i32, db: &PgPool) -> quark_orm::Result<Book::With<(Re
  * Author::With<((Book, Review))> {
  * 	...Author,
  * 
- * 	books: Vec<Book::With<Review>>
+ * 	books: Vec<Book::With<(Review,)>>
  * }
  */
-async fn get_author(author_id: i32, db: &PgPool) -> quark_orm::Result<Author::With<((Book, Review))>> {
+async fn get_author(author_id: i32, db: &PgPool) -> quark_orm::Result<Author::With<((Book, Review),)>> {
 	Book::find_first(filter! {
 		id: author_id
 	})
