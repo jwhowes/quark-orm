@@ -38,11 +38,11 @@ pub struct Book {
 
 	#[quark_orm(unique)]
 	pub title: String,
-	
-	#[quark_orm(to = "review")]
+
+	#[quark_orm(foreign_key = "review")]
 	pub review_id: Option<i32>,
 
-	pub review: One<Review>,
+	pub review: MaybeOne<Review>,
 
 	#[quark_orm(via = "book_author")]
 	pub authors: Many<Author>
@@ -53,9 +53,6 @@ pub struct Book {
 pub struct Review {
 	#[quark_orm(primary_key)]
 	pub id: i32,
-
-	#[quark_orm(to = "book")]
-	pub book_id: i32,
 
 	pub rating: i32,
 
@@ -68,7 +65,6 @@ pub struct Author {
 	#[quark_orm(primary_key)]
 	pub id: i32,
 
-	#[quark_orm(unique)]
 	pub name: String,
 
 	#[quark_orm(via = "book_author")]
@@ -76,47 +72,16 @@ pub struct Author {
 }
 
 #[derive(Model)]
-#[quark_orm(table_name = "book_author", primary_key = ["book_id", "author_id"])]
+#[quark_orm(
+	table_name = "book_author",
+	primary_key = ["book_id", "author_id"]
+)]
 pub struct BookAuthor {
-	#[quark_orm(to = "book")]
+	#[quark_orm(foreign_key = "book")]
 	pub book_id: i32,
 
-	#[quark_orm(to = "author")]
+	#[quark_orm(foreign_key = "author")]
 	pub author_id: i32,
-
-	pub author: One<Author>,
-	pub book: One<Book>
-}
-
-/**
- * Book::With<(Review, Author)> {
- * 	...Book,
- * 	
- * 	review: Option<Review>,
- * 	authors: Vec<Author>
- * }
- */
-async fn get_book(book_id: i32, db: &PgPool) -> quark_orm::Result<Book::With<(Review, Author)>> {
-	Book::find_first(filter! {
-		id: book_id
-	})
-		.exec(db)
-		.await
-}
-
-/**
- * Author::With<((Book, Review))> {
- * 	...Author,
- * 
- * 	books: Vec<Book::With<(Review,)>>
- * }
- */
-async fn get_author(author_id: i32, db: &PgPool) -> quark_orm::Result<Author::With<((Book, Review),)>> {
-	Book::find_first(filter! {
-		id: author_id
-	})
-		.exec(db)
-		.await
 }
 ```
 

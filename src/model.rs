@@ -1,6 +1,6 @@
 use sqlx::{Database, FromRow, Postgres, postgres::PgRow, query::QueryAs};
 
-use crate::query::relation::Relation;
+use crate::query::{FindFirst, FindMany};
 
 pub trait Model
 where
@@ -8,5 +8,11 @@ where
 {
     type Filter: for<'q> Into<QueryAs<'q, Postgres, Self, <Postgres as Database>::Arguments>>;
 
-    type With<R: Relation<Self>>;
+    fn find_first(q: Self::Filter) -> FindFirst<Self> {
+        FindFirst(q)
+    }
+
+    fn find_many(q: Self::Filter) -> FindMany<Self> {
+        FindMany(q)
+    }
 }
