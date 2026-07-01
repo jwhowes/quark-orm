@@ -3,3 +3,6 @@
 
 # Lock Files (don't include for libraries)
 **/Cargo.lock
+
+# Dev Files
+.env

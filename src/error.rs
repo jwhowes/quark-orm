@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct DbError;
 
 impl From<sqlx::Error> for DbError {

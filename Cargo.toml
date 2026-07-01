@@ -8,4 +8,8 @@ edition = "2024"
 
 [dependencies]
 quark-orm-macros = { path = "./quark-orm-macros" }
-sqlx = { version = "0.9.0", features = ["postgres"] }
+sqlx = { version = "0.9.0", features = ["postgres", "runtime-tokio"] }
+tokio = { version = "1.52.3", features = ["full"] }
+
+[dev-dependencies]
+dotenv = "0.15.0"
