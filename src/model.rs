@@ -1,12 +1,15 @@
-use sqlx::{Database, Postgres, postgres::PgRow, query::Query};
+use sqlx::{Database, FromRow, Postgres, postgres::PgRow, query::QueryAs};
 
-use crate::{
-    error::Result,
-    query::{FindFirst, FindMany},
-};
+use crate::query::{FindFirst, FindMany};
 
-pub trait Model: Sized {
-    type Filter: for<'q> Into<Query<'q, Postgres, <Postgres as Database>::Arguments>>;
+pub trait Model: Send + Unpin
+where
+    Self: for<'q> FromRow<'q, PgRow>,
+{
+    const ID: &'static str;
+    const AS_CLAUSE: &'static str;
+
+    type Filter: for<'q> Into<QueryAs<'q, Postgres, Self, <Postgres as Database>::Arguments>>;
 
     fn find_first(q: Self::Filter) -> FindFirst<Self> {
         FindFirst(q)
@@ -15,6 +18,4 @@ pub trait Model: Sized {
     fn find_many(q: Self::Filter) -> FindMany<Self> {
         FindMany(q)
     }
-
-    fn from_row(row: PgRow) -> Result<Self>;
 }

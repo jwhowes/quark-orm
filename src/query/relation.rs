@@ -1,3 +1,7 @@
+use sqlx::{FromRow, Row, postgres::PgRow};
+
+use crate::model::Model;
+
 pub enum Relation<T> {
     NotIncluded,
     Included(T),
@@ -30,6 +34,16 @@ impl<T> Relation<T> {
 impl<T> Default for Relation<T> {
     fn default() -> Self {
         Relation::NotIncluded
+    }
+}
+
+impl<'q, M: Model> FromRow<'q, PgRow> for Relation<M> {
+    fn from_row(row: &'q PgRow) -> Result<Self, sqlx::Error> {
+        match row.try_get::<Option<i32>, _>(M::ID)? {
+            None => Ok(Relation::NotIncluded),
+
+            Some(_) => Ok(Relation::Included(M::from_row(row)?)),
+        }
     }
 }
 

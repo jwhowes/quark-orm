@@ -1,7 +1,7 @@
 use std::env;
 
 use dotenv::dotenv;
-use sqlx::PgPool;
+use sqlx::{PgPool, Postgres, QueryBuilder, Row};
 
 use crate::{
     error::Result,
@@ -12,11 +12,15 @@ use crate::{
 
 mod book;
 
-#[tokio::test]
-async fn get_book() -> Result<()> {
+fn get_pool() -> PgPool {
     let _ = dotenv();
 
-    let db = PgPool::connect_lazy(&env::var("DATABASE_URL").unwrap()).unwrap();
+    PgPool::connect_lazy(&env::var("DATABASE_URL").unwrap()).unwrap()
+}
+
+#[tokio::test]
+async fn get_book() -> Result<()> {
+    let db = get_pool();
 
     let book = Book::find_first(book_model::Filter {
         id: Some(1),
@@ -33,6 +37,23 @@ async fn get_book() -> Result<()> {
             title: "Test Book".to_string()
         }
     );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn get_book_with_review() -> Result<()> {
+    let db = get_pool();
+
+    let row = QueryBuilder::<Postgres>::new(
+        "SELECT book.id AS \"book__id\" FROM book JOIN review ON book.id=review.book_id",
+    )
+    .build()
+    .fetch_optional(&db)
+    .await?
+    .unwrap();
+
+    println!("{:?}", row);
 
     Ok(())
 }
