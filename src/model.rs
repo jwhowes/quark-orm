@@ -1,6 +1,8 @@
-use sqlx::{Database, FromRow, Postgres, postgres::PgRow, query::QueryAs};
+use sqlx::{FromRow, Postgres, QueryBuilder, postgres::PgRow};
 
-use crate::query::{FindFirst, FindMany};
+use crate::query::{FindFirst, FindMany, Select};
+
+/* SELECT {as_clause} FROM book WHERE {where_clause} {join_clause} */
 
 pub trait Model: Send + Unpin
 where
@@ -9,13 +11,17 @@ where
     const ID: &'static str;
     const AS_CLAUSE: &'static str;
 
-    type Filter: for<'q> Into<QueryAs<'q, Postgres, Self, <Postgres as Database>::Arguments>>;
+    type Select: Select;
 
-    fn find_first(q: Self::Filter) -> FindFirst<Self> {
-        FindFirst(q)
+    fn find_first(s: Self::Select) -> FindFirst<'static, Self> {
+        FindFirst(sqlx::query_as(
+            QueryBuilder::<Postgres>::new(s.select_query()).sql(),
+        ))
     }
 
-    fn find_many(q: Self::Filter) -> FindMany<Self> {
-        FindMany(q)
+    fn find_many(s: Self::Select) -> FindMany<'static, Self> {
+        FindMany(sqlx::query_as(
+            QueryBuilder::<Postgres>::new(s.select_query()).sql(),
+        ))
     }
 }

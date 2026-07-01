@@ -10,43 +10,48 @@ pub struct Book {
 }
 
 pub mod book_model {
-    use sqlx::{
-        Database, Postgres, QueryBuilder,
-        query::{Query, QueryAs},
-    };
+    use crate::query::Select as SelectTrait;
 
-    use crate::{model::Model, schema::book::Book};
+    use super::*;
+
+    pub struct Select {
+        pub filter: Filter,
+        pub include: Include,
+    }
 
     pub struct Filter {
         pub id: Option<i32>,
         pub title: Option<String>,
     }
 
-    impl<'q> Into<QueryAs<'q, Postgres, Book, <Postgres as Database>::Arguments>> for Filter {
-        fn into(self) -> QueryAs<'q, Postgres, Book, <Postgres as Database>::Arguments> {
+    pub struct Include {}
+
+    impl SelectTrait for Select {
+        fn as_clause(&self) -> String {
+            Book::AS_CLAUSE.to_string()
+        }
+
+        fn join_clause(&self) -> Option<String> {
+            None
+        }
+
+        fn where_clause(&self) -> Option<String> {
             let conds = [
-                self.id.map(|x| format!("id={}", x)),
-                self.title.map(|x| format!("title='{}'", x)),
+                self.filter.id.map(|x| format!("book__id={}", x)),
+                self.filter
+                    .title
+                    .as_ref()
+                    .map(|x| format!("book__title=\"{}\"", x)),
             ]
             .into_iter()
             .filter_map(|x| x)
-            .collect::<Vec<_>>()
-            .join(" AND ");
+            .collect::<Vec<_>>();
 
-            let where_clause = if conds.is_empty() {
-                "".to_string()
+            if conds.is_empty() {
+                None
             } else {
-                format!(" WHERE {}", conds)
-            };
-
-            sqlx::query_as(
-                QueryBuilder::<Postgres>::new(format!(
-                    "SELECT {} FROM book {}",
-                    Book::AS_CLAUSE,
-                    where_clause
-                ))
-                .sql(),
-            )
+                Some(format!(" WHERE {}", conds.join(" AND ")))
+            }
         }
     }
 }
@@ -55,7 +60,7 @@ impl Model for Book {
     const ID: &'static str = "book__id";
     const AS_CLAUSE: &'static str = "book.id  AS \"book__id\", book.title AS \"book__title\"";
 
-    type Filter = book_model::Filter;
+    type Select = book_model::Select;
 }
 
 impl<'r> FromRow<'r, PgRow> for Book {

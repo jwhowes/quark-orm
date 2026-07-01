@@ -1,7 +1,7 @@
 use std::env;
 
 use dotenv::dotenv;
-use sqlx::{PgPool, Postgres, QueryBuilder, Row};
+use sqlx::{PgPool, Postgres, QueryBuilder};
 
 use crate::{
     error::Result,
@@ -22,9 +22,12 @@ fn get_pool() -> PgPool {
 async fn get_book() -> Result<()> {
     let db = get_pool();
 
-    let book = Book::find_first(book_model::Filter {
-        id: Some(1),
-        title: None,
+    let book = Book::find_first(book_model::Select {
+        filter: book_model::Filter {
+            id: Some(1),
+            title: None,
+        },
+        include: book_model::Include {},
     })
     .exec(&db)
     .await?
