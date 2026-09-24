@@ -1,3 +1,7 @@
+[workspace]
+members = [".", "quark-migrate"]
+resolver = "3"
+
 [package]
 name = "quark-orm"
 version = "0.1.0"
