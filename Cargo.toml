@@ -1,0 +1,10 @@
+[package]
+name = "quark-orm"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "quark_orm"
+path = "src/lib.rs"
+
+[dependencies]

@@ -1,0 +1,8 @@
+# Build Files
+**/target/
+
+# Library Files
+Cargo.lock
+
+# Dev Files
+.env
