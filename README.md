@@ -32,19 +32,16 @@ use quark_orm::{Result, prelude::*};
 use crate::schema::{Book, Author};
 
 pub async fn get_book_by_id(id: u32) -> Result<Option<Book>> {
-	Book::find_by_id(id)
-		.exec()
+	Book::filter_by_id(id)
+		.fetch_first()
 		.await
 }
 
 pub async fn find_author_books(name: &str) -> Result<Vec<Book>> {
 	Ok(
-		Author::find_by_name(name)
-			.with(Author::With::Book)
-			.exec()
+		Book::filter_by_author_name(name)
+			.fetch_all()
 			.await?
-			.map(|a| a.books)
-			.unwrap_or_default
 	)
 }
 ```
