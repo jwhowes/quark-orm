@@ -22,7 +22,7 @@ pub struct Book {
 
 	pub title: String,
 
-	pub authors: One<Author>
+	pub author: One<Author>
 }
 ```
 
@@ -33,16 +33,15 @@ use crate::schema::{Book, Author};
 
 pub async fn get_book_by_id(id: u32) -> Result<Option<Book>> {
 	Book::filter_by_id(id)
-		.fetch_first()
+		.include(Book::Include::Author)
+		.find_first()
 		.await
 }
 
 pub async fn find_author_books(name: &str) -> Result<Vec<Book>> {
-	Ok(
-		Book::filter_by_author_name(name)
-			.fetch_all()
-			.await?
-	)
+	Book::filter_by_author_name(name)
+		.find_all()
+		.await?
 }
 ```
 
